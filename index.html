@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#123c2b">
+<title>Amigo Secreto</title>
+<style>
+:root{--green:#123c2b;--green2:#1d6245;--red:#b72e3b;--gold:#e8bd63;--cream:#fffaf0;--ink:#203027;--muted:#6d786f;--line:#e8e4d9}
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(150deg,#f5f1e5,#fff 55%,#f8e9e5);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:var(--ink);min-height:100vh}
+header{background:var(--green);color:white;padding:26px 18px 30px;text-align:center;border-bottom:5px solid var(--gold)}
+header .mark{font-size:35px}h1{margin:5px 0;font-size:clamp(27px,6vw,40px)}header p{margin:4px auto 0;max-width:600px;color:#e8f0e9}
+main{max-width:880px;margin:24px auto;padding:0 14px 40px}.panel{background:white;border:1px solid var(--line);border-radius:18px;padding:20px;margin:15px 0;box-shadow:0 8px 24px #243a2910}
+h2{font-size:20px;margin:0 0 13px;color:var(--green)}label{font-size:14px;font-weight:650;display:block;margin:10px 0 5px}
+input{width:100%;padding:12px;border:1px solid #d7dacf;border-radius:10px;font:inherit;background:#fff}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.participant{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)}.participant:last-child{border:0}.small{font-size:13px;color:var(--muted)}
+button{border:0;border-radius:11px;padding:12px 16px;font:inherit;font-weight:700;cursor:pointer;background:var(--green2);color:white}
+button:hover{filter:brightness(1.08)}button.secondary{background:#edf2ed;color:var(--green)}button.danger{background:#fff0f0;color:#a52b37;padding:8px 11px}
+.actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:13px}.notice{padding:12px;border-radius:12px;background:#fff7e5;color:#634b19;font-size:13px;line-height:1.5}.success{background:#edf8f0;color:#1c5932}.error{background:#fff0f0;color:#922b35}
+.checkrow{display:flex;align-items:center;gap:9px;margin:8px 0}.checkrow input{width:auto}.linkrow{border:1px solid var(--line);border-radius:12px;padding:12px;margin:9px 0}.linkrow strong{display:block}.linkrow a{overflow-wrap:anywhere;font-size:12px;color:#1a6545}
+.hidden{display:none!important}.hero-result{text-align:center;padding:30px 12px}.hero-result .gift{font-size:56px}.hero-result h2{font-size:26px}.friend{font-size:clamp(28px,7vw,42px);font-weight:800;color:var(--red);margin:12px 0}
+footer{text-align:center;color:var(--muted);font-size:12px;padding:0 16px 25px}
+@media(max-width:560px){.row{grid-template-columns:1fr}.panel{padding:16px}header{padding-top:20px}}
+</style>
+</head>
+<body>
+<header><div class="mark">🎁 ✨ 🎄</div><h1>Amigo Secreto</h1><p>Organiza tu intercambio de regalos de forma sencilla y divertida.</p></header>
+<main>
+<section id="reveal" class="panel hidden">
+ <div class="hero-result"><div class="gift">🎁</div><h2>¡Tu amigo secreto es…!</h2><div id="friendName" class="friend"></div><p>¡Prepara una sorpresa especial! 🤫</p><button onclick="copyCurrentLink()">Copiar este enlace</button></div>
+ <div class="notice">Este enlace contiene únicamente el resultado de esta persona. No lo publiques ni lo compartas con otras personas.</div>
+</section>
+<div id="organizer">
+<section class="panel">
+ <h2>1. Datos del intercambio</h2>
+ <label for="eventName">Nombre del evento</label><input id="eventName" placeholder="Ej. Navidad en familia" value="Amigo Secreto">
+ <p class="small">Agrega al menos 3 participantes para realizar el sorteo.</p>
+ <div class="row"><div><label for="pName">Nombre del participante</label><input id="pName" placeholder="Nombre"></div><div><label for="pEmail">Correo (opcional)</label><input id="pEmail" type="email" placeholder="correo@ejemplo.com"></div></div>
+ <div class="actions"><button onclick="addParticipant()">+ Agregar participante</button></div>
+ <div id="participants" style="margin-top:14px"></div>
+</section>
+<section class="panel">
+ <h2>2. Exclusiones</h2>
+ <p class="small">Selecciona parejas que no deben tocarse entre sí. La exclusión funciona en ambos sentidos.</p>
+ <div class="row"><div><label for="exA">Primera persona</label><select id="exA" style="width:100%;padding:12px;border:1px solid #d7dacf;border-radius:10px"></select></div><div><label for="exB">No debe regalar a</label><select id="exB" style="width:100%;padding:12px;border:1px solid #d7dacf;border-radius:10px"></select></div></div>
+ <div class="actions"><button class="secondary" onclick="addExclusion()">Añadir exclusión</button></div><div id="exclusions" class="small" style="margin-top:10px"></div>
+</section>
+<section class="panel">
+ <h2>3. Realizar el sorteo</h2>
+ <div class="notice">El sorteo se realiza en este dispositivo. Los nombres y resultados no se guardan en un servidor ni se suben a GitHub. Guarda los enlaces antes de cerrar o recargar esta página.</div>
+ <div class="actions"><button onclick="draw()">🎄 Sortear amigos secretos</button><button class="secondary" onclick="resetAll()">Borrar todo</button></div>
+ <div id="message" style="margin-top:12px" aria-live="polite"></div>
+</section>
+<section id="resultsPanel" class="panel hidden">
+ <h2>4. Enlaces privados para compartir</h2>
+ <p class="small">Envía a cada persona solamente su propio enlace. Puedes copiarlo o compartirlo por WhatsApp.</p>
+ <div id="results"></div>
+ <div class="actions"><button class="secondary" onclick="copyAllLinks()">Copiar todos los enlaces</button></div>
+</section>
+</div>
+</main>
+<footer>Hecho para compartir la alegría de regalar. ❤️ · Aplicación gratuita y de código abierto.</footer>
+<script>
+let people=[], exclusions=[], lastLinks=[];
+const $=id=>document.getElementById(id);
+function addParticipant(){
+ const name=$('pName').value.trim(), email=$('pEmail').value.trim();
+ if(!name){msg('Escribe el nombre del participante.','error');return}
+ if(people.some(p=>p.name.toLowerCase()===name.toLowerCase())){msg('Ese nombre ya está en la lista.','error');return}
+ people.push({name,email});$('pName').value='';$('pEmail').value='';render();
+}
+function removeParticipant(i){const gone=people[i].name;people.splice(i,1);exclusions=exclusions.filter(x=>x[0]!==gone&&x[1]!==gone);render()}
+function render(){
+ $('participants').innerHTML=people.length?people.map((p,i)=>`<div class="participant"><div><strong>${esc(p.name)}</strong>${p.email?`<div class="small">${esc(p.email)}</div>`:''}</div><button class="danger" onclick="removeParticipant(${i})">Quitar</button></div>`).join():'<p class="small">Todavía no hay participantes.</p>';
+ ['exA','exB'].forEach(id=>{const old=$(id).value;$(id).innerHTML=people.map(p=>`<option value="${escAttr(p.name)}">${esc(p.name)}</option>`).join();if(people.some(p=>p.name===old))$(id).value=old});
+ $('exclusions').innerHTML=exclusions.length?exclusions.map((x,i)=>`<div class="participant"><span>${esc(x[0])} ↔ ${esc(x[1])}</span><button class="danger" onclick="removeExclusion(${i})">Quitar</button></div>`).join():'No hay exclusiones.';
+}
+function addExclusion(){const a=$('exA').value,b=$('exB').value;if(!a||!b||a===b){msg('Elige dos personas diferentes.','error');return}if(exclusions.some(x=>x.includes(a)&&x.includes(b))){msg('Esa exclusión ya existe.','error');return}exclusions.push([a,b]);render();msg('Exclusión añadida.','success')}
+function removeExclusion(i){exclusions.splice(i,1);render()}
+function msg(t,kind=''){ $('message').className='notice '+kind;$('message').textContent=t}
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function solve(){
+ const n=people.length, names=people.map(p=>p.name), blocked=new Set();
+ exclusions.forEach(([a,b])=>{blocked.add(a+'|'+b);blocked.add(b+'|'+a)});
+ const order=shuffle([...Array(n).keys()]), assigned=Array(n).fill(-1), used=new Set();
+ function backtrack(k){
+  if(k===n)return true;
+  const giver=order[k], opts=shuffle([...Array(n).keys()].filter(j=>!used.has(j)&&j!==giver&&!blocked.has(names[giver]+'|'+names[j])));
+  for(const receiver of opts){assigned[giver]=receiver;used.add(receiver);if(backtrack(k+1))return true;used.delete(receiver);assigned[giver]=-1}
+  return false;
+ }
+ return backtrack(0)?assigned:null;
+}
+function enc(obj){const bytes=new TextEncoder().encode(JSON.stringify(obj));let bin='';bytes.forEach(b=>bin+=String.fromCharCode(b));return btoa(bin).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')}
+function dec(s){s=s.replace(/-/g,'+').replace(/_/g,'/');while(s.length%4)s+='=';const bin=atob(s);return JSON.parse(new TextDecoder().decode(Uint8Array.from(bin,c=>c.charCodeAt(0))))}
+function draw(){
+ $('message').textContent='';
+ if(people.length<3){msg('Necesitas al menos 3 participantes.','error');return}
+ const assignment=solve();if(!assignment){msg('No se puede realizar el sorteo con estas exclusiones. Quita alguna restricción e inténtalo de nuevo.','error');return}
+ const event=$('eventName').value.trim()||'Amigo Secreto';
+ const base=location.href.split('#')[0];
+ lastLinks=people.map((p,i)=>({name:p.name,email:p.email,link:base+'#ver='+enc({event,person:p.name,friend:people[assignment[i]].name})}));
+ $('results').innerHTML=lastLinks.map((r,i)=>`<div class="linkrow"><strong>${esc(r.name)}</strong><a href="${escAttr(r.link)}" target="_blank" rel="noopener">${esc(r.link)}</a><div class="actions"><button onclick="copyLink(${i})">Copiar enlace</button><button class="secondary" onclick="shareLink(${i})">WhatsApp</button></div></div>`).join('');
+ $('resultsPanel').classList.remove('hidden');msg('¡Sorteo realizado! Comparte cada enlace únicamente con su destinatario.','success');
+}
+function copyLink(i){navigator.clipboard?.writeText(lastLinks[i].link).then(()=>msg('Enlace copiado.','success')).catch(()=>prompt('Copia este enlace:',lastLinks[i].link))||prompt('Copia este enlace:',lastLinks[i].link)}
+function copyAllLinks(){const t=lastLinks.map(x=>x.name+': '+x.link).join('\n');if(navigator.clipboard){navigator.clipboard.writeText(t).then(()=>msg('Todos los enlaces copiados.','success')).catch(()=>prompt('Copia los enlaces:',t))}else prompt('Copia los enlaces:',t)}
+function shareLink(i){const r=lastLinks[i],text=`Hola ${r.name}, ya se realizó el sorteo de Amigo Secreto. Abre tu enlace para descubrir a quién te toca regalar: ${r.link}`;location.href='https://wa.me/?text='+encodeURIComponent(text)}
+function copyCurrentLink(){if(navigator.clipboard)navigator.clipboard.writeText(location.href).then(()=>alert('Enlace copiado.'));else prompt('Copia tu enlace:',location.href)}
+function resetAll(){if(!confirm('¿Borrar participantes, exclusiones y resultados?'))return;people=[];exclusions=[];lastLinks=[];$('resultsPanel').classList.add('hidden');$('message').textContent='';render()}
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function escAttr(s){return esc(s)}
+function showLink(){
+ const match=location.hash.match(/^#ver=(.+)$/);if(!match)return;
+ try{const data=dec(match[1]);if(!data.person||!data.friend)throw 0;$('organizer').classList.add('hidden');$('reveal').classList.remove('hidden');$('friendName').textContent=data.friend;document.title='Tu amigo secreto';}
+ catch(e){$('organizer').classList.add('hidden');$('reveal').classList.remove('hidden');$('friendName').textContent='Enlace no válido';}
+}
+render();showLink();
+</script>
+</body></html>
